@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 import uz.digital.daggerhilt.R
 import uz.digital.daggerhilt.databinding.FragmentDetailBinding
 import uz.digital.daggerhilt.model.Post
+import uz.digital.daggerhilt.util.snackBar
 
 @AndroidEntryPoint
 class DetailFragment : Fragment(R.layout.fragment_detail) {
@@ -57,6 +59,7 @@ class DetailFragment : Fragment(R.layout.fragment_detail) {
                     is DetailState.SuccessDeleted -> {
                         binding.pr.isVisible = false
                         binding.btnDelete.isVisible = false
+                        snackBar("Successfully deleted!")
                         findNavController().popBackStack()
                     }
                 }
@@ -64,6 +67,13 @@ class DetailFragment : Fragment(R.layout.fragment_detail) {
         }
         binding.btnDelete.setOnClickListener {
             viewModel.onEvent(DetailEvent.OnDelete(id ?: 1))
+        }
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().popBackStack()
+        }
+        binding.btnUpdate.setOnClickListener {
+            val postId = bundleOf("id" to this.id)
+            findNavController().navigate(R.id.action_detailFragment_to_addUpdateFragment, postId)
         }
     }
 

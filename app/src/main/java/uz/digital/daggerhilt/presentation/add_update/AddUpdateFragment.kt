@@ -5,56 +5,100 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import uz.digital.daggerhilt.R
+import uz.digital.daggerhilt.databinding.FragmentAddUpdateBinding
+import uz.digital.daggerhilt.model.Post
+import uz.digital.daggerhilt.util.snackBar
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [AddUpdateFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
-class AddUpdateFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+@AndroidEntryPoint
+class AddUpdateFragment : Fragment(R.layout.fragment_add_update) {
+    private var _binding: FragmentAddUpdateBinding? = null
+    private val binding get() = _binding!!
+    private var id: Int? = null
+    private val viewModel: AddUpdateViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+        id = arguments?.getInt("id")
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentAddUpdateBinding.bind(view)
+        initViews()
+    }
+
+    private fun initViews() {
+        if (id != null) {
+            binding.toolbar.title = "Update Post"
+            binding.btnAddUpdate.text = "Update"
+            viewModel.onEvent(AddUpdateEvent.OnGetOnePost(id!!))
+        } else {
+            binding.toolbar.title = "Create Post"
+            binding.btnAddUpdate.text = "Create"
+        }
+        observeViewModel()
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().popBackStack()
+        }
+        binding.btnAddUpdate.setOnClickListener {
+            if (id != null) {
+                viewModel.onEvent(AddUpdateEvent.OnUpdatePost(id!!))
+            } else {
+                val title = binding.tvTitle.text.toString().trim()
+                val body = binding.tvBody.text.toString().trim()
+                if (title.isNotBlank() && body.isNotBlank()) {
+                    viewModel.onEvent(AddUpdateEvent.OnCreatePost(Post(title = title, body = body)))
+                } else {
+                    snackBar("Enter data!")
+                }
+            }
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_add_update, container, false)
-    }
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment AddUpdateFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            AddUpdateFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    private fun observeViewModel() {
+        lifecycleScope.launch {
+            viewModel.state.collect {
+                when (it) {
+                    is AddUpdateState.Loading -> {
+                        binding.pr.isVisible = true
+                        binding.btnAddUpdate.isVisible = false
+                    }
+                    is AddUpdateState.Idle -> Unit
+                    is AddUpdateState.SuccessUpdated -> {
+                        snackBar("Successfully updated!")
+                        binding.pr.isVisible = false
+                    }
+                    is AddUpdateState.SuccessCreated -> {
+                        snackBar("Successfully created!")
+                        binding.pr.isVisible = false
+                        findNavController().popBackStack()
+                    }
+                    is AddUpdateState.Error -> {
+                        binding.pr.isVisible = false
+                        snackBar(it.message)
+                    }
+                    is AddUpdateState.SuccessPostGot -> {
+                        binding.apply {
+                            pr.isVisible = false
+                            btnAddUpdate.isVisible = true
+                            tvTitle.setText(it.post.title)
+                            tvBody.setText(it.post.body)
+                        }
+                    }
                 }
             }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

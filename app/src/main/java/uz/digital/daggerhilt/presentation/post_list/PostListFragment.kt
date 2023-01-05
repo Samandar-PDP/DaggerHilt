@@ -61,6 +61,9 @@ class PostListFragment : Fragment(R.layout.fragment_post_list) {
             val post = bundleOf("id" to it.id)
             findNavController().navigate(R.id.action_postListFragment_to_detailFragment, post)
         }
+        binding.floatingActionButton.setOnClickListener {
+            findNavController().navigate(R.id.action_postListFragment_to_addUpdateFragment)
+        }
     }
 
     override fun onDestroyView() {
