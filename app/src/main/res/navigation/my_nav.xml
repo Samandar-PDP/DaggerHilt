@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/my_nav.xml"
+    app:startDestination="@id/postListFragment">
+
+    <fragment
+        android:id="@+id/postListFragment"
+        android:name="uz.digital.daggerhilt.presentation.post_list.PostListFragment"
+        android:label="fragment_post_list"
+        tools:layout="@layout/fragment_post_list" >
+        <action
+            android:id="@+id/action_postListFragment_to_detailFragment"
+            app:destination="@id/detailFragment" />
+        <action
+            android:id="@+id/action_postListFragment_to_addUpdateFragment"
+            app:destination="@id/addUpdateFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/addUpdateFragment"
+        android:name="uz.digital.daggerhilt.presentation.add_update.AddUpdateFragment"
+        android:label="fragment_add_update"
+        tools:layout="@layout/fragment_add_update" />
+    <fragment
+        android:id="@+id/detailFragment"
+        android:name="uz.digital.daggerhilt.presentation.detail.DetailFragment"
+        android:label="fragment_detail"
+        tools:layout="@layout/fragment_detail" />
+</navigation>
