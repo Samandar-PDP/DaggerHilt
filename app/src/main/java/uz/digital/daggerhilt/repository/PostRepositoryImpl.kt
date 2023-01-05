@@ -3,13 +3,18 @@ package uz.digital.daggerhilt.repository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import uz.digital.daggerhilt.database.PostDao
 import uz.digital.daggerhilt.model.Post
 import uz.digital.daggerhilt.network.ApiService
 import uz.digital.daggerhilt.util.Response
+import uz.digital.daggerhilt.util.toPost
+import uz.digital.daggerhilt.util.toPostEntity
 import javax.inject.Inject
 
 class PostRepositoryImpl @Inject constructor(
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val dao: PostDao
 ) : PostRepository {
     override suspend fun getAllRemotePosts(): Flow<Response<List<Post>>> = flow {
         try {
@@ -52,5 +57,19 @@ class PostRepositoryImpl @Inject constructor(
 
     override suspend fun deletePost(id: Int): Flow<Boolean> = flow {
         emit(apiService.deletePost(id).isSuccessful)
+    }
+
+    override suspend fun savePostList(list: List<Post>) {
+        dao.savePostList(list.map { it.toPostEntity() })
+    }
+
+    override suspend fun clearData() {
+        dao.clearData()
+    }
+
+    override fun getAllLocalPosts(): Flow<List<Post>> = flow {
+        dao.getLocalPostList().collect { post ->
+            emit(post.map { it.toPost() })
+        }
     }
 }
